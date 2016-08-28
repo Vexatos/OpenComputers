@@ -1,8 +1,8 @@
-package li.cil.oc.integration.gregtech
+package li.cil.oc.integration.gregtech.gregtech6
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent
-import gregtech.api.interfaces.IDamagableItem
-import gregtech.api.items.GT_MetaGenerated_Tool
+import gregapi.item.IItemDamagable
+import gregapi.item.multiitem.MultiItemTool
 import li.cil.oc.api.event.RobotUsedToolEvent
 import net.minecraft.item.ItemStack
 
@@ -10,8 +10,8 @@ object EventHandlerGregTech {
   @SubscribeEvent
   def onRobotApplyDamageRate(e: RobotUsedToolEvent.ApplyDamageRate) {
     (e.toolBeforeUse.getItem, e.toolAfterUse.getItem) match {
-      case (itemBefore: IDamagableItem, itemAfter: IDamagableItem) =>
-        val damage = GT_MetaGenerated_Tool.getToolDamage(e.toolAfterUse) - GT_MetaGenerated_Tool.getToolDamage(e.toolBeforeUse)
+      case (itemBefore: IItemDamagable, itemAfter: IItemDamagable) =>
+        val damage = MultiItemTool.getToolDamage(e.toolAfterUse) - MultiItemTool.getToolDamage(e.toolBeforeUse)
         if (damage > 0) {
           val actualDamage = damage * e.getDamageRate
           val repairedDamage =
@@ -19,7 +19,7 @@ object EventHandlerGregTech {
               damage - math.floor(actualDamage).toInt
             else
               damage - math.ceil(actualDamage).toInt
-          GT_MetaGenerated_Tool.setToolDamage(e.toolAfterUse, GT_MetaGenerated_Tool.getToolDamage(e.toolAfterUse) - repairedDamage)
+          MultiItemTool.setToolDamage(e.toolAfterUse, MultiItemTool.getToolDamage(e.toolAfterUse) - repairedDamage)
         }
       case _ =>
     }
@@ -27,7 +27,7 @@ object EventHandlerGregTech {
 
   def getDurability(stack: ItemStack): Double = {
     stack.getItem match {
-      case item: IDamagableItem => 1.0 - GT_MetaGenerated_Tool.getToolDamage(stack).toDouble / GT_MetaGenerated_Tool.getToolMaxDamage(stack).toDouble
+      case item: IItemDamagable => 1.0 - MultiItemTool.getToolDamage(stack).toDouble / MultiItemTool.getToolMaxDamage(stack).toDouble
       case _ => Double.NaN
     }
   }

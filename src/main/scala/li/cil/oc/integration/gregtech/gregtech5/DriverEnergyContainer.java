@@ -1,4 +1,4 @@
-package li.cil.oc.integration.gregtech;
+package li.cil.oc.integration.gregtech.gregtech5;
 
 import gregtech.api.interfaces.tileentity.IBasicEnergyContainer;
 import li.cil.oc.api.machine.Arguments;

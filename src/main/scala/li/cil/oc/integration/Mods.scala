@@ -47,7 +47,8 @@ object Mods {
   val Forestry = new SimpleMod(IDs.Forestry, version = "@[4.0,)")
   val ForgeMultipart = new SimpleMod(IDs.ForgeMultipart)
   val Galacticraft = new SimpleMod(IDs.Galacticraft, providesPower = true)
-  val GregTech = new ClassBasedMod(IDs.GregTech, "gregtech.api.GregTech_API")()
+  val GregTech5 = new ClassBasedMod(IDs.GregTech, "gregtech.api.GregTech_API")()
+  val GregTech6 = new ClassBasedMod(IDs.GregTech, "gregapi.GT_API")()
   val IndustrialCraft2 = new SimpleMod(IDs.IndustrialCraft2, providesPower = true)
   val IndustrialCraft2Classic = new SimpleMod(IDs.IndustrialCraft2Classic, providesPower = true)
   val IngameWiki = new SimpleMod(IDs.IngameWiki, version = "@[1.1.3,)")
@@ -110,7 +111,8 @@ object Mods {
     integration.forestry.ModForestry,
     integration.fmp.ModForgeMultipart,
     integration.gc.ModGalacticraft,
-    integration.gregtech.ModGregtech,
+    integration.gregtech.gregtech5.ModGregtech5,
+    integration.gregtech.gregtech6.ModGregtech6,
     integration.ic2.ModIndustrialCraft2,
     integration.mekanism.ModMekanism,
     integration.mekanism.gas.ModMekanismGas,

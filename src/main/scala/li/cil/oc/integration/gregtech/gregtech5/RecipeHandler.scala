@@ -1,9 +1,8 @@
-package li.cil.oc.integration.gregtech
+package li.cil.oc.integration.gregtech.gregtech5
 
 import java.util
 
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigValue
+import com.typesafe.config.{Config, ConfigValue}
 import li.cil.oc.common.recipe.Recipes
 import li.cil.oc.common.recipe.Recipes.RecipeException
 import net.minecraft.item.ItemStack

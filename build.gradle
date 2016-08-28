@@ -88,6 +88,10 @@ repositories {
         url = "http://maven.ic2.player.to/"
     }
     maven {
+        name = "gt"
+        url = "http://gregtech.overminddl1.com/"
+    }
+    maven {
         name = "IGW"
         url = "http://maven.k-4u.nl/"
     }
@@ -175,8 +179,9 @@ repositories {
 
 configurations {
     provided
+    provided2
     embedded
-    compile.extendsFrom provided, embedded
+    compile.extendsFrom provided, provided2, embedded
 }
 
 dependencies {
@@ -191,6 +196,7 @@ dependencies {
     provided "codechicken:WR-CBE:${config.minecraft.version}-${config.wrcbe.version}:dev"
     provided "com.bluepowermod:BluePower:${config.bluepower.version}:deobf"
     provided "com.gregoriust.gregtech:gregtech_${config.minecraft.version}:${config.gt.version}:dev"
+    provided2 "com.gregoriust.gregtech:gregtech_${config.minecraft.version}:${config.gt6.version}:dev"
     provided "igwmod:IGW-Mod-1.7.10:${config.igwmod.version}:userdev"
     provided "li.cil.tis3d:TIS-3D:${config.tis3d.version}:dev"
     provided "mcp.mobius.waila:Waila:${config.waila.version}_${config.minecraft.version}:dev"
@@ -229,6 +235,7 @@ dependencies {
 }
 
 idea.module.scopes.PROVIDED.plus += [configurations.provided]
+idea.module.scopes.PROVIDED.plus += [configurations.provided2]
 // TODO Causes errors on Gradle 2 for me (No such property: allDependencies for class: java.io.File).
 //eclipse.classpath.plusConfigurations += [configurations.provided]
 
