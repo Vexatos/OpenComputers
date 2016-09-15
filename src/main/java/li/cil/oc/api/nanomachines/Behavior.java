@@ -1,5 +1,7 @@
 package li.cil.oc.api.nanomachines;
 
+import li.cil.oc.api.machine.Arguments;
+
 /**
  * Implemented by single behaviors.
  * <p/>
@@ -49,4 +51,10 @@ public interface Behavior {
      * Called each tick while this behavior is active.
      */
     void update();
+
+    /**
+     * Calls the nanomachine behavior using the <tt>call</tt> command.
+     * The returned values will be passed as the response message.
+     */
+    Object[] call(Arguments args);
 }

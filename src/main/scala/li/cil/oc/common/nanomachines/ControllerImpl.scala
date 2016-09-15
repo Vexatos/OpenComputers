@@ -16,6 +16,7 @@ import li.cil.oc.api.network.WirelessEndpoint
 import li.cil.oc.common.item.data.NanomachineData
 import li.cil.oc.integration.util.DamageSourceWithRandomCause
 import li.cil.oc.server.PacketSender
+import li.cil.oc.server.machine.ArgumentsImpl
 import li.cil.oc.util.BlockPosition
 import li.cil.oc.util.ExtendedNBT._
 import li.cil.oc.util.InventoryUtils
@@ -138,6 +139,20 @@ class ControllerImpl(val player: EntityPlayer) extends Controller with WirelessE
                 val names = getActiveBehaviors.map(_.getNameHint).filterNot(Strings.isNullOrEmpty)
                 val joined = "{" + names.map(_.replace(',', '_').replace('"', '_')).mkString(",") + "}"
                 respond(sender, "effects", joined)
+              }
+            case Array("call", index: java.lang.Number, data @ _*) =>
+              try {
+                var response: Array[AnyRef] = null
+                configuration.synchronized(
+                  response = configuration.behaviors(index.intValue - 1).behavior.call(new ArgumentsImpl(data))
+                )
+                respond(sender, Array(Array("call", new Integer(index.intValue)), response).flatten)
+              }
+              catch {
+                case e: Exception =>
+                  respond(sender, "call", "error", e.getMessage)
+                case _: Throwable =>
+                  respond(sender, "call", "error")
               }
             case _ => // Ignore.
           }
