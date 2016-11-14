@@ -68,7 +68,7 @@ object FluidUtils {
 
   // ----------------------------------------------------------------------- //
 
-  private class GenericBlockWrapper(position: BlockPosition) extends IFluidHandler {
+  class GenericBlockWrapper(position: BlockPosition) extends IFluidHandler {
     override def canDrain(from: EnumFacing, fluid: Fluid): Boolean = currentWrapper.fold(false)(_.canDrain(from, fluid))
 
     override def drain(from: EnumFacing, resource: FluidStack, doDrain: Boolean): FluidStack = currentWrapper.fold(null: FluidStack)(_.drain(from, resource, doDrain))
