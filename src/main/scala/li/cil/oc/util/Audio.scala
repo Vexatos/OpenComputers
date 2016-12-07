@@ -144,9 +144,10 @@ object Audio {
           checkALError()
 
           AL10.alSource3f(source, AL10.AL_POSITION, x, y, z)
-          AL10.alSourcef(source, AL10.AL_REFERENCE_DISTANCE, maxDistance)
-          AL10.alSourcef(source, AL10.AL_MAX_DISTANCE, maxDistance)
+          //AL10.alSourcef(source, AL10.AL_REFERENCE_DISTANCE, maxDistance)
+          //AL10.alSourcef(source, AL10.AL_MAX_DISTANCE, maxDistance)
           AL10.alSourcef(source, AL10.AL_GAIN, gain * 0.3f)
+          AL10.alSourcef(source, AL10.AL_ROLLOFF_FACTOR, 0.25f)
           checkALError()
 
           AL10.alSourcePlay(source)
