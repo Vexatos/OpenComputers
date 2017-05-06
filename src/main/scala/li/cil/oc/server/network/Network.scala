@@ -8,6 +8,7 @@ import li.cil.oc.api.network._
 import li.cil.oc.api.network.{Node => ImmutableNode}
 import li.cil.oc.common.capabilities.Capabilities
 import li.cil.oc.common.tileentity
+import li.cil.oc.integration
 import li.cil.oc.server.network.{Node => MutableNode}
 import li.cil.oc.util.Color
 import li.cil.oc.util.SideTracker
@@ -543,6 +544,9 @@ object Network extends api.detail.NetworkAPI {
   override def sendWirelessPacket(source: WirelessEndpoint, strength: Double, packet: network.Packet) {
     for (endpoint <- WirelessNetwork.computeReachableFrom(source, strength)) {
       endpoint.receivePacket(packet, source)
+    }
+    if(integration.Mods.ComputerCraft.isModAvailable) {
+      integration.computercraft.ComputerCraftWirelessNetwork.sendWirelessPacket(source, strength, packet)
     }
   }
 

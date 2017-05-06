@@ -2,6 +2,7 @@ package li.cil.oc.server.network
 
 import li.cil.oc.Settings
 import li.cil.oc.api.network.WirelessEndpoint
+import li.cil.oc.integration
 import li.cil.oc.util.BlockPosition
 import li.cil.oc.util.ExtendedBlock._
 import li.cil.oc.util.ExtendedWorld._
@@ -42,6 +43,10 @@ object WirelessNetwork {
 
   def add(endpoint: WirelessEndpoint) {
     dimensions.getOrElseUpdate(dimension(endpoint), new RTree[WirelessEndpoint](Settings.get.rTreeMaxEntries)((endpoint) => (endpoint.x + 0.5, endpoint.y + 0.5, endpoint.z + 0.5))).add(endpoint)
+
+    if(integration.Mods.ComputerCraft.isModAvailable) {
+      integration.computercraft.ComputerCraftWirelessNetwork.addReceiver(endpoint)
+    }
   }
 
   def update(endpoint: WirelessEndpoint) {
@@ -63,6 +68,9 @@ object WirelessNetwork {
   }
 
   def remove(endpoint: WirelessEndpoint, dimension: Int) = {
+    if(integration.Mods.ComputerCraft.isModAvailable) {
+      integration.computercraft.ComputerCraftWirelessNetwork.removeReceiver(endpoint)
+    }
     dimensions.get(dimension) match {
       case Some(set) => set.remove(endpoint)
       case _ => false
@@ -70,6 +78,9 @@ object WirelessNetwork {
   }
 
   def remove(endpoint: WirelessEndpoint) = {
+    if(integration.Mods.ComputerCraft.isModAvailable) {
+      integration.computercraft.ComputerCraftWirelessNetwork.removeReceiver(endpoint)
+    }
     dimensions.get(dimension(endpoint)) match {
       case Some(set) => set.remove(endpoint)
       case _ => false
