@@ -30,7 +30,7 @@ object EnvironmentProviderBlocks extends EnvironmentProvider {
       else if (isOneOf(block.getBlock, Constants.BlockName.Printer)) classOf[tileentity.Printer]
       else if (isOneOf(block.getBlock, Constants.BlockName.Redstone)) if (BundledRedstone.isAvailable) classOf[component.Redstone.Bundled] else classOf[component.Redstone.Vanilla]
       else if (isOneOf(block.getBlock, Constants.BlockName.ScreenTier1)) classOf[common.component.TextBuffer]: Class[_ <: Environment]
-      else if (isOneOf(block.getBlock, Constants.BlockName.ScreenTier2, Constants.BlockName.ScreenTier3)) classOf[common.component.Screen]
+      else if (isOneOf(block.getBlock, Constants.BlockName.ScreenTier2, Constants.BlockName.ScreenTier3, Constants.BlockName.ScreenTier4)) classOf[common.component.Screen]
       else if (isOneOf(block.getBlock, Constants.BlockName.Robot)) classOf[component.Robot]: Class[_ <: Environment]
       else if (isOneOf(block.getBlock, Constants.BlockName.Waypoint)) classOf[tileentity.Waypoint]: Class[_ <: Environment]
       else null

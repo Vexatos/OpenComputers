@@ -2,6 +2,7 @@ package li.cil.oc.client
 
 import li.cil.oc.Constants
 import li.cil.oc.api
+import li.cil.oc.api
 import li.cil.oc.api.internal.Colored
 import li.cil.oc.common.block
 import li.cil.oc.util.Color
@@ -50,7 +51,8 @@ object ColorHandler {
     },
       api.Items.get(Constants.BlockName.ScreenTier1).block(),
       api.Items.get(Constants.BlockName.ScreenTier2).block(),
-      api.Items.get(Constants.BlockName.ScreenTier3).block())
+      api.Items.get(Constants.BlockName.ScreenTier3).block(),
+      api.Items.get(Constants.BlockName.ScreenTier4).block())
 
     register((stack, tintIndex) => if (ItemColorizer.hasColor(stack)) ItemColorizer.getColor(stack) else tintIndex,
       Item.getItemFromBlock(api.Items.get(Constants.BlockName.Cable).block()))
@@ -68,6 +70,7 @@ object ColorHandler {
       Item.getItemFromBlock(api.Items.get(Constants.BlockName.ScreenTier1).block()),
       Item.getItemFromBlock(api.Items.get(Constants.BlockName.ScreenTier2).block()),
       Item.getItemFromBlock(api.Items.get(Constants.BlockName.ScreenTier3).block()),
+      Item.getItemFromBlock(api.Items.get(Constants.BlockName.ScreenTier4).block()),
       Item.getItemFromBlock(api.Items.get(Constants.BlockName.Print).block()),
       Item.getItemFromBlock(api.Items.get(Constants.BlockName.Robot).block()))
 

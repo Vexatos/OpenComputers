@@ -14,6 +14,7 @@ trait GPULike extends Delegate {
         case 0 => "1/1/4/2/2"
         case 1 => "2/4/8/4/4"
         case 2 => "4/8/16/8/8"
+        case 3 => "4/8/16/8/8"
       })
   }
 }

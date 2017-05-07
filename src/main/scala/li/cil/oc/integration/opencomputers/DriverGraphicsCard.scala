@@ -16,23 +16,31 @@ object DriverGraphicsCard extends Item with HostAware {
   override def worksWith(stack: ItemStack) = isOneOf(stack,
     api.Items.get(Constants.ItemName.GraphicsCardTier1),
     api.Items.get(Constants.ItemName.GraphicsCardTier2),
-    api.Items.get(Constants.ItemName.GraphicsCardTier3))
+    api.Items.get(Constants.ItemName.GraphicsCardTier3),
+    api.Items.get(Constants.ItemName.GraphicsCardTier4))
 
   override def createEnvironment(stack: ItemStack, host: EnvironmentHost) =
     if (host.world != null && host.world.isRemote) null
-    else tier(stack) match {
+    else realTier(stack) match {
       case Tier.One => new component.GraphicsCard(Tier.One)
       case Tier.Two => new component.GraphicsCard(Tier.Two)
       case Tier.Three => new component.GraphicsCard(Tier.Three)
+      case Tier.Four => new component.GraphicsCard(Tier.Four)
       case _ => null
     }
 
   override def slot(stack: ItemStack) = Slot.Card
 
-  override def tier(stack: ItemStack) =
+  def realTier(stack: ItemStack): Int =
     Delegator.subItem(stack) match {
       case Some(gpu: common.item.GraphicsCard) => gpu.gpuTier
       case _ => Tier.One
+    }
+
+  override def tier(stack: ItemStack): Int =
+    realTier(stack) match {
+      case Tier.Four => Tier.One
+      case t => t
     }
 
   object Provider extends EnvironmentProvider {

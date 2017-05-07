@@ -72,7 +72,7 @@ object Textures {
 
   object Icons extends TextureBundle {
     private val ForSlotType = Slot.All.map(name => name -> L(name)).toMap
-    private val ForTier = Map(Tier.None -> L("na")) ++ (Tier.One to Tier.Three).map(tier => tier -> L("tier" + tier)).toMap
+    private val ForTier = Map(Tier.None -> L("na")) ++ (Tier.One to Tier.Four).map(tier => tier -> L("tier" + tier)).toMap
 
     def get(slotType: String) = ForSlotType.get(slotType).orNull
 

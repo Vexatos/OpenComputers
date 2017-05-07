@@ -29,7 +29,8 @@ object ScreenRenderer extends TileEntitySpecialRenderer[Screen] {
   private lazy val screens = Set(
     api.Items.get(Constants.BlockName.ScreenTier1),
     api.Items.get(Constants.BlockName.ScreenTier2),
-    api.Items.get(Constants.BlockName.ScreenTier3))
+    api.Items.get(Constants.BlockName.ScreenTier3),
+    api.Items.get(Constants.BlockName.ScreenTier4))
 
   private val canUseBlendColor = GLContext.getCapabilities.OpenGL14
 

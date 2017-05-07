@@ -290,7 +290,7 @@ class Screen(var tier: Int) extends traits.TextBuffer with SidedEnvironment with
   private final val InvertTouchModeTag = Settings.namespace + "invertTouchMode"
 
   override def readFromNBTForServer(nbt: NBTTagCompound) {
-    tier = nbt.getByte(TierTag) max 0 min 2
+    tier = nbt.getByte(TierTag) max 0 min 3
     setColor(Color.rgbValues(Color.byTier(tier)))
     super.readFromNBTForServer(nbt)
     hadRedstoneInput = nbt.getBoolean(HadRedstoneInputTag)
@@ -306,7 +306,7 @@ class Screen(var tier: Int) extends traits.TextBuffer with SidedEnvironment with
 
   @SideOnly(Side.CLIENT) override
   def readFromNBTForClient(nbt: NBTTagCompound) {
-    tier = nbt.getByte(TierTag) max 0 min 2
+    tier = nbt.getByte(TierTag) max 0 min 3
     super.readFromNBTForClient(nbt)
     invertTouchMode = nbt.getBoolean(InvertTouchModeTag)
   }

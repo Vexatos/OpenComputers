@@ -85,6 +85,7 @@ object ScreenModel extends SmartBlockModelBase {
     val color = api.Items.get(stack).name() match {
       case Constants.BlockName.ScreenTier2 => Color.byTier(Tier.Two)
       case Constants.BlockName.ScreenTier3 => Color.byTier(Tier.Three)
+      case Constants.BlockName.ScreenTier4 => Color.byTier(Tier.Four)
       case _ => Color.byTier(Tier.One)
     }
 

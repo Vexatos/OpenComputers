@@ -52,12 +52,12 @@ class GraphicsCard(val tier: Int) extends prefab.ManagedEnvironment with DeviceI
     case _ => Array(Unit, "no screen")
   }
 
-  final val setBackgroundCosts = Array(1.0 / 32, 1.0 / 64, 1.0 / 128)
-  final val setForegroundCosts = Array(1.0 / 32, 1.0 / 64, 1.0 / 128)
-  final val setPaletteColorCosts = Array(1.0 / 2, 1.0 / 8, 1.0 / 16)
-  final val setCosts = Array(1.0 / 64, 1.0 / 128, 1.0 / 256)
-  final val copyCosts = Array(1.0 / 16, 1.0 / 32, 1.0 / 64)
-  final val fillCosts = Array(1.0 / 32, 1.0 / 64, 1.0 / 128)
+  final val setBackgroundCosts = Array(1.0 / 32, 1.0 / 64, 1.0 / 128, 1.0 / 512)
+  final val setForegroundCosts = Array(1.0 / 32, 1.0 / 64, 1.0 / 128, 1.0 / 512)
+  final val setPaletteColorCosts = Array(1.0 / 2, 1.0 / 8, 1.0 / 16, 1.0 / 64)
+  final val setCosts = Array(1.0 / 64, 1.0 / 128, 1.0 / 256, 1.0 / 1024)
+  final val copyCosts = Array(1.0 / 16, 1.0 / 32, 1.0 / 64, 1.0 / 256)
+  final val fillCosts = Array(1.0 / 32, 1.0 / 64, 1.0 / 128, 1.0 / 512)
 
   // ----------------------------------------------------------------------- //
 
@@ -73,7 +73,7 @@ class GraphicsCard(val tier: Int) extends prefab.ManagedEnvironment with DeviceI
 
   def capacityInfo = (maxResolution._1 * maxResolution._2).toString
 
-  def widthInfo = Array("1", "4", "8").apply(maxDepth.ordinal())
+  def widthInfo = Array("1", "4", "8", "8").apply(maxDepth.ordinal())
 
   def clockInfo = ((2000 / setBackgroundCosts(tier)).toInt / 100).toString + "/" + ((2000 / setForegroundCosts(tier)).toInt / 100).toString + "/" + ((2000 / setPaletteColorCosts(tier)).toInt / 100).toString + "/" + ((2000 / setCosts(tier)).toInt / 100).toString + "/" + ((2000 / copyCosts(tier)).toInt / 100).toString + "/" + ((2000 / fillCosts(tier)).toInt / 100).toString
 
