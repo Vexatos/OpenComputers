@@ -22,8 +22,8 @@ object ComputerCraftWirelessNetwork {
       case b: Array[Byte] => new String(b, Charsets.UTF_8)
       case v => v
     }.zipWithIndex.map(t => t._2 + 1 -> t._1).toMap)
-    ComputerCraftAPI.getWirelessNetwork.transmit(
-      new Packet(packet.port, packet.port, payload, strength, false, Sender(source, packet.source))
+    ComputerCraftAPI.getWirelessNetwork.transmitSameDimension(
+      new Packet(packet.port, packet.port, payload, Sender(source, packet.source)), strength
     )
   }
 
