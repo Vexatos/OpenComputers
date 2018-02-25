@@ -96,7 +96,7 @@ trait Buffered extends OutputStreamFileSystem {
 
   override def save(nbt: NBTTagCompound): Unit = {
     super.save(nbt)
-    saving = BufferedFileSaveHandler.scheduleSave(this)
+    saving = FileSaveHandler.scheduleSave(this)
   }
 
   def saveFiles(): Unit = this.synchronized {

@@ -7,11 +7,11 @@ import java.util.concurrent.TimeUnit
 import li.cil.oc.OpenComputers
 import li.cil.oc.util.ThreadPoolFactory
 
-object BufferedFileSaveHandler {
+object FileSaveHandler {
 
   private var _threadPool: ScheduledExecutorService = _
 
-  private def withPool(f: ScheduledExecutorService => Future[_], requiresPool: Boolean = true): Option[Future[_]] = {
+  def withPool(f: ScheduledExecutorService => Future[_], requiresPool: Boolean = true): Option[Future[_]] = {
     if (_threadPool == null) {
       OpenComputers.log.warn("Error handling file saving: Did the server never start?")
       if (requiresPool) {
