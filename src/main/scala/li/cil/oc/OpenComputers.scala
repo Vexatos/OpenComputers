@@ -2,6 +2,8 @@ package li.cil.oc
 
 import li.cil.oc.common.IMC
 import li.cil.oc.common.Proxy
+import li.cil.oc.common.SaveHandler
+import li.cil.oc.common.StateSaveHandler
 import li.cil.oc.server.command.CommandHandler
 import li.cil.oc.server.fs.FileSaveHandler
 import net.minecraftforge.fml.common.Mod
@@ -54,12 +56,20 @@ object OpenComputers {
   @EventHandler
   def serverStart(e: FMLServerStartingEvent): Unit = {
     CommandHandler.register(e)
+    //SaveHandler.shuttingDown = false
     FileSaveHandler.newThreadPool()
+    StateSaveHandler.newThreadPool()
   }
 
+  /*@EventHandler
+  def serverStopping(e: FMLServerStoppingEvent): Unit = {
+    SaveHandler.shuttingDown = true
+  }*/
+
   @EventHandler
-  def serverStop(e: FMLServerStoppingEvent): Unit = {
+  def serverStop(e: FMLServerStoppedEvent): Unit = {
     FileSaveHandler.waitForSaving()
+    StateSaveHandler.waitForSaving()
   }
 
   @EventHandler

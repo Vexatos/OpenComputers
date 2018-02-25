@@ -5,7 +5,9 @@ import java.io._
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Future
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -13,8 +15,8 @@ import li.cil.oc.OpenComputers
 import li.cil.oc.Settings
 import li.cil.oc.api.machine.MachineHost
 import li.cil.oc.api.network.EnvironmentHost
-import li.cil.oc.server.fs.FileSaveHandler.withPool
 import li.cil.oc.util.BlockPosition
+import li.cil.oc.util.ThreadPoolFactory
 import net.minecraft.nbt.CompressedStreamTools
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.util.math.ChunkPos
@@ -46,11 +48,36 @@ object SaveHandler {
   // which takes a lot of time and is completely unnecessary in those cases.
   var savingForClients = false
 
-  case class SaveDataEntry(data: Array[Byte], pos: ChunkPos) {}
+  class SaveDataEntry(val data: Array[Byte], val pos: ChunkPos, val name: String, val dimension: Int) extends Runnable {
+    override def run(): Unit = {
+      val path = statePath
+      val dimPath = new io.File(path, dimension.toString)
+      val chunkPath = new io.File(dimPath, s"${this.pos.x}.${this.pos.z}")
+      chunkDirs.add(chunkPath)
+      if (!chunkPath.exists()) {
+        chunkPath.mkdirs()
+      }
+      val file = new io.File(chunkPath, this.name)
+      try {
+        // val fos = new GZIPOutputStream(new io.FileOutputStream(file))
+        val fos = new io.BufferedOutputStream(new io.FileOutputStream(file))
+        fos.write(this.data)
+        fos.close()
+      }
+      catch {
+        case e: io.IOException => OpenComputers.log.warn(s"Error saving auxiliary tile entity data to '${file.getAbsolutePath}.", e)
+      }
+    }
+  }
 
-  val saveData = mutable.Map.empty[Int, mutable.Map[String, SaveDataEntry]]
+  class CacheObject(var lasttime: Long, var data: Array[Byte]) {
 
-  private var saving: Option[Future[_]] = None
+  }
+
+  //val saveData = new LinkedBlockingDeque[Runnable]()
+  val chunkDirs = new ConcurrentLinkedDeque[io.File]()
+  val saving = mutable.HashMap.empty[String, Future[_]]
+  //var shuttingDown: Boolean = false
 
   def savePath = new io.File(DimensionManager.getCurrentSaveRootDirectory, Settings.savePath)
 
@@ -121,40 +148,50 @@ object SaveHandler {
     val dimension = nbt.getInteger("dimension")
     val chunk = new ChunkPos(nbt.getInteger("chunkX"), nbt.getInteger("chunkZ"))
 
-    saving.foreach(f => try {
+    saving.get(name).foreach(f => try {
       f.get(120L, TimeUnit.SECONDS)
     } catch {
       case e: TimeoutException => OpenComputers.log.warn("Waiting for state data to save took two minutes! Aborting.")
       case e: CancellationException => // NO-OP
     })
+    saving.remove(name)
 
     load(dimension, chunk, name)
   }
 
-  def scheduleSave(dimension: Int, chunk: ChunkPos, name: String, data: Array[Byte]) = saveData.synchronized {
+  def scheduleSave(dimension: Int, chunk: ChunkPos, name: String, data: Array[Byte]): Unit = {
     if (chunk == null) throw new IllegalArgumentException("chunk is null")
     else {
+      /*dataCache.get(name) match {
+        case c: CacheObject if !shuttingDown && c.lasttime - (System.nanoTime() - 50000000) >= 0 =>
+          c.data = data
+          return
+        case _ => dataCache.put(name, new CacheObject(System.nanoTime(), data))
+      }*/
       // Make sure we get rid of old versions (e.g. left over by other mods
       // triggering a save - this is mostly used for RiM compatibility). We
       // need to do this for *each* dimension, in case computers are teleported
       // across dimensions.
-      saveData.values.foreach(_ -= name)
-      saveData.getOrElseUpdate(dimension, mutable.Map.empty) += name -> SaveDataEntry(data, chunk)
+      /*val iter = saveData.iterator()
+      while (iter.hasNext) {
+        val s: SaveDataEntry = iter.next().asInstanceOf[FutureTask]
+        if (s.name == name) {
+          iter.remove()
+        }
+      }*/
+      StateSaveHandler.withPool(_.submit(new SaveDataEntry(data, chunk, name, dimension))).foreach(saving.put(name, _))
     }
   }
 
-  def load(dimension: Int, chunk: ChunkPos, name: String): Array[Byte] = saveData.synchronized {
+  def load(dimension: Int, chunk: ChunkPos, name: String): Array[Byte] = {
     if (chunk == null) throw new IllegalArgumentException("chunk is null")
     // Use data from 'cache' if possible. This avoids weird things happening
     // when writeToNBT+readFromNBT is called by other mods (i.e. this is not
     // used to actually save the data to disk).
-    saveData.get(dimension) match {
-      case Some(map) => map.get(name) match {
-        case Some(data) => return data.data
-        case _ =>
-      }
+    /*dataCache.get(name) match {
+      case data: CacheObject => return data.data
       case _ =>
-    }
+    }*/
     val path = statePath
     val dimPath = new io.File(path, dimension.toString)
     val chunkPath = new io.File(dimPath, s"${chunk.x}.${chunk.z}")
@@ -182,33 +219,9 @@ object SaveHandler {
     }
   }
 
-  def saveSaveData(dimension: Int) = saveData.synchronized {
-    val path = statePath
-    val dimPath = new io.File(path, dimension.toString)
-    var chunks = mutable.Set.empty[io.File]
-    saveData.get(dimension) match {
-      case Some(entries) =>
-        for ((name, data) <- entries) {
-          val chunkPath = new io.File(dimPath, s"${data.pos.x}.${data.pos.z}")
-          chunks += chunkPath
-          if(!chunkPath.exists()) {
-            chunkPath.mkdirs()
-          }
-          val file = new io.File(chunkPath, name)
-          try {
-            // val fos = new GZIPOutputStream(new io.FileOutputStream(file))
-            val fos = new io.BufferedOutputStream(new io.FileOutputStream(file))
-            fos.write(data.data)
-            fos.close()
-          }
-          catch {
-            case e: io.IOException => OpenComputers.log.warn(s"Error saving auxiliary tile entity data to '${file.getAbsolutePath}.", e)
-          }
-        }
-        entries.clear()
-      case _ =>
-    }
-    for (chunkPath <- chunks) {
+  def cleanSaveData(): Unit = {
+    while (!chunkDirs.isEmpty) {
+      val chunkPath = chunkDirs.poll()
       if (chunkPath.exists && chunkPath.isDirectory && chunkPath.list() != null) {
         for (file <- chunkPath.listFiles() if System.currentTimeMillis() - file.lastModified() > TimeToHoldOntoOldSaves) file.delete()
       }
@@ -249,14 +262,14 @@ object SaveHandler {
       file.setLastModified(System.currentTimeMillis())
       if (file.exists() && file.isDirectory && file.list() != null) file.listFiles().foreach(recurse)
     }
+
     recurse(statePath)
   }
 
   @SubscribeEvent(priority = EventPriority.LOWEST)
   def onWorldSave(e: WorldEvent.Save) {
-    val dimension = e.getWorld.provider.getDimension
-    saving = withPool(threadPool => threadPool.submit(new Runnable {
-      override def run(): Unit = saveSaveData(dimension)
+    StateSaveHandler.withPool(threadPool => threadPool.submit(new Runnable {
+      override def run(): Unit = cleanSaveData()
     }))
   }
 }
@@ -276,4 +289,56 @@ object SaveHandlerJava17Functionality {
       override def postVisitDirectory(dir: Path, exc: IOException) = FileVisitResult.CONTINUE
     })
   }
+}
+
+object StateSaveHandler {
+
+  private var _threadPool: ScheduledExecutorService = _
+
+  def withPool(f: ScheduledExecutorService => Future[_], requiresPool: Boolean = true): Option[Future[_]] = {
+    if (_threadPool == null) {
+      OpenComputers.log.warn("Error handling state saving: Did the server never start?")
+      if (requiresPool) {
+        OpenComputers.log.warn("Creating new thread pool.")
+        newThreadPool()
+      } else {
+        return None
+      }
+    } else if (_threadPool.isShutdown || _threadPool.isTerminated) {
+      OpenComputers.log.warn("Error handling state saving: Thread pool shut down!")
+      if (requiresPool) {
+        OpenComputers.log.warn("Creating new thread pool.")
+        newThreadPool()
+      } else {
+        return None
+      }
+    }
+    Option(f(_threadPool))
+  }
+
+  def newThreadPool(): Unit = {
+    if (_threadPool != null && !_threadPool.isTerminated) {
+      _threadPool.shutdownNow()
+    }
+    //_threadPool = ThreadPoolFactory.createWithQueue("SaveHandler", 1, SaveHandler.saveData)
+    _threadPool = ThreadPoolFactory.create("SaveHandler", 1)
+  }
+
+  def waitForSaving(): Unit = withPool(threadPool => {
+    try {
+      threadPool.shutdown()
+      var terminated = threadPool.awaitTermination(15, TimeUnit.SECONDS)
+      if (!terminated) {
+        OpenComputers.log.warn("Warning: Saving states has already taken 15 seconds!")
+        terminated = threadPool.awaitTermination(105, TimeUnit.SECONDS)
+        if (!terminated) {
+          OpenComputers.log.error("Warning: Saving states has already taken two minutes! Aborting")
+          threadPool.shutdownNow()
+        }
+      }
+    } catch {
+      case e: InterruptedException => e.printStackTrace()
+    }
+    null
+  }, requiresPool = false)
 }
