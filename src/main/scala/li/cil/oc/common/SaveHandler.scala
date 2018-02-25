@@ -7,7 +7,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.Future
-import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -17,6 +16,7 @@ import li.cil.oc.api.machine.MachineHost
 import li.cil.oc.api.network.EnvironmentHost
 import li.cil.oc.util.BlockPosition
 import li.cil.oc.util.ThreadPoolFactory
+import li.cil.oc.util.WrappedThreadPool
 import net.minecraft.nbt.CompressedStreamTools
 import net.minecraft.nbt.NBTTagCompound
 import net.minecraft.util.math.ChunkPos
@@ -70,14 +70,10 @@ object SaveHandler {
     }
   }
 
-  class CacheObject(var lasttime: Long, var data: Array[Byte]) {
+  val stateSaveHandler: WrappedThreadPool = ThreadPoolFactory.createWrappedPool("SaveHandler", 1)
 
-  }
-
-  //val saveData = new LinkedBlockingDeque[Runnable]()
   val chunkDirs = new ConcurrentLinkedDeque[io.File]()
   val saving = mutable.HashMap.empty[String, Future[_]]
-  //var shuttingDown: Boolean = false
 
   def savePath = new io.File(DimensionManager.getCurrentSaveRootDirectory, Settings.savePath)
 
@@ -162,12 +158,6 @@ object SaveHandler {
   def scheduleSave(dimension: Int, chunk: ChunkPos, name: String, data: Array[Byte]): Unit = {
     if (chunk == null) throw new IllegalArgumentException("chunk is null")
     else {
-      /*dataCache.get(name) match {
-        case c: CacheObject if !shuttingDown && c.lasttime - (System.nanoTime() - 50000000) >= 0 =>
-          c.data = data
-          return
-        case _ => dataCache.put(name, new CacheObject(System.nanoTime(), data))
-      }*/
       // Make sure we get rid of old versions (e.g. left over by other mods
       // triggering a save - this is mostly used for RiM compatibility). We
       // need to do this for *each* dimension, in case computers are teleported
@@ -179,7 +169,7 @@ object SaveHandler {
           iter.remove()
         }
       }*/
-      StateSaveHandler.withPool(_.submit(new SaveDataEntry(data, chunk, name, dimension))).foreach(saving.put(name, _))
+      stateSaveHandler.withPool(_.submit(new SaveDataEntry(data, chunk, name, dimension))).foreach(saving.put(name, _))
     }
   }
 
@@ -268,7 +258,7 @@ object SaveHandler {
 
   @SubscribeEvent(priority = EventPriority.LOWEST)
   def onWorldSave(e: WorldEvent.Save) {
-    StateSaveHandler.withPool(threadPool => threadPool.submit(new Runnable {
+    stateSaveHandler.withPool(threadPool => threadPool.submit(new Runnable {
       override def run(): Unit = cleanSaveData()
     }))
   }
@@ -289,56 +279,4 @@ object SaveHandlerJava17Functionality {
       override def postVisitDirectory(dir: Path, exc: IOException) = FileVisitResult.CONTINUE
     })
   }
-}
-
-object StateSaveHandler {
-
-  private var _threadPool: ScheduledExecutorService = _
-
-  def withPool(f: ScheduledExecutorService => Future[_], requiresPool: Boolean = true): Option[Future[_]] = {
-    if (_threadPool == null) {
-      OpenComputers.log.warn("Error handling state saving: Did the server never start?")
-      if (requiresPool) {
-        OpenComputers.log.warn("Creating new thread pool.")
-        newThreadPool()
-      } else {
-        return None
-      }
-    } else if (_threadPool.isShutdown || _threadPool.isTerminated) {
-      OpenComputers.log.warn("Error handling state saving: Thread pool shut down!")
-      if (requiresPool) {
-        OpenComputers.log.warn("Creating new thread pool.")
-        newThreadPool()
-      } else {
-        return None
-      }
-    }
-    Option(f(_threadPool))
-  }
-
-  def newThreadPool(): Unit = {
-    if (_threadPool != null && !_threadPool.isTerminated) {
-      _threadPool.shutdownNow()
-    }
-    //_threadPool = ThreadPoolFactory.createWithQueue("SaveHandler", 1, SaveHandler.saveData)
-    _threadPool = ThreadPoolFactory.create("SaveHandler", 1)
-  }
-
-  def waitForSaving(): Unit = withPool(threadPool => {
-    try {
-      threadPool.shutdown()
-      var terminated = threadPool.awaitTermination(15, TimeUnit.SECONDS)
-      if (!terminated) {
-        OpenComputers.log.warn("Warning: Saving states has already taken 15 seconds!")
-        terminated = threadPool.awaitTermination(105, TimeUnit.SECONDS)
-        if (!terminated) {
-          OpenComputers.log.error("Warning: Saving states has already taken two minutes! Aborting")
-          threadPool.shutdownNow()
-        }
-      }
-    } catch {
-      case e: InterruptedException => e.printStackTrace()
-    }
-    null
-  }, requiresPool = false)
 }
